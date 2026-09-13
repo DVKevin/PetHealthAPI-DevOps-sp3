@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace PetHealthAPI.Models
 {
@@ -55,6 +56,7 @@ namespace PetHealthAPI.Models
         public int TutorId { get; set; }
 
         // Navegação
+        [JsonIgnore]
         public Tutor? Tutor { get; set; }
         public ICollection<Vacina> Vacinas { get; set; } = new List<Vacina>();
         public ICollection<Consulta> Consultas { get; set; } = new List<Consulta>();

@@ -5,3 +5,6 @@ obj/
 logs/
 
 logs/
+appsettings.Development.json
+appsettings.Local.json
+.env
