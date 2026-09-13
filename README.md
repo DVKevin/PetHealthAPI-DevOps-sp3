@@ -26,9 +26,31 @@ Nesta Sprint de **DevOps Tools & Cloud Computing**, a aplicação foi containeri
 
 **Opção escolhida: ACR + ACI (Azure Container Registry + Azure Container Instances)**
 
-![Arquitetura da Solução na Azure](./docs/arquitetura-azure-pethealthapi.png)
-
-**Como funciona:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│                         Azure (Cloud)                        │
+│                                                                │
+│  ┌──────────────────────┐                                    │
+│  │  Azure Container      │   docker push                     │
+│  │  Registry (ACR)        │◄──────────────┐                  │
+│  │  acrpethealthdevops    │                │                  │
+│  └──────────┬─────────────┘                │                  │
+│             │ docker pull                  │                  │
+│             ▼                              │                  │
+│  ┌──────────────────────┐         ┌────────┴─────────┐        │
+│  │  ACI - PetHealthAPI    │  HTTP  │  Máquina Local    │        │
+│  │  (.NET 8, porta 8080)  │◄───────┤  (build/push da   │        │
+│  │  IP público             │        │  imagem)          │        │
+│  └──────────┬─────────────┘         └───────────────────┘      │
+│             │ Oracle (porta 1521, via FQDN)                   │
+│             ▼                                                  │
+│  ┌──────────────────────┐                                    │
+│  │  ACI - Oracle XE       │                                    │
+│  │  (banco de dados)      │                                    │
+│  │  IP público             │                                    │
+│  └────────────────────────┘                                    │
+└─────────────────────────────────────────────────────────────┘
+```
 
 **Como funciona:**
 1. A imagem Docker da API é buildada localmente e enviada (`docker push`) para o **Azure Container Registry (ACR)**.
@@ -155,7 +177,13 @@ az container logs --resource-group rg-pethealth-devops --name aci-pethealth-orac
 Espere `DATABASE IS READY TO USE!` antes de prosseguir.
 
 ### 4. Criar o schema no Oracle da nuvem
-Conecte via DBeaver (ou outro cliente Oracle) no FQDN mostrado ao final do script 3, porta `1521`, Service Name `XEPDB1`, usuário `pethealth`, e execute o [`script_bd.sql`](./script_bd.sql).
+Entre no container do Oracle via Azure CLI e execute o script direto do repositório:
+```bash
+az container exec --resource-group rg-pethealth-devops --name aci-pethealth-oracle --exec-command "/bin/bash"
+curl -L -o /tmp/script_bd.sql https://raw.githubusercontent.com/DVKevin/PetHealthAPI-DevOps-sp3/main/script_bd.sql
+sqlplus pethealth/SuaSenhaForteAqui123#@//localhost:1521/XEPDB1 @/tmp/script_bd.sql
+```
+(No Windows, se o comando `az container exec` der erro de caminho, prefixe com `MSYS_NO_PATHCONV=1`.)
 
 ### 5. Criar o ACI da API
 ```bash
@@ -191,7 +219,7 @@ Sequência recomendada, usando o Swagger ou Postman contra a API publicada na Az
 6. **Exclusão** — `DELETE /api/pets/{id}` (remove um pet)
 7. **Consulta** — `GET /api/tutores` (confirma que o pet não aparece mais)
 
-Cada uma dessas operações pode ser comprovada diretamente no banco com `SELECT * FROM TB_PH_TUTOR` / `SELECT * FROM TB_PH_PET`, usando o DBeaver conectado ao Oracle da Azure.
+Cada uma dessas operações pode ser comprovada diretamente no banco com `SELECT * FROM TB_PH_TUTOR` / `SELECT * FROM TB_PH_PET`, executado via `sqlplus` dentro do próprio container do Oracle na Azure (veja o comando de conexão na seção de deploy acima).
 
 ---
 
