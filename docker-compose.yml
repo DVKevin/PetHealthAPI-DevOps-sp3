@@ -1,0 +1,34 @@
+services:
+  oracle-db:
+    image: gvenzl/oracle-xe:21-slim
+    container_name: pethealth-oracle
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD}
+      APP_USER: pethealth
+      APP_USER_PASSWORD: ${ORACLE_PASSWORD}
+    ports:
+      - "1522:1521"
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pethealth-api
+    depends_on:
+      oracle-db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      ConnectionStrings__OracleConnection: "User Id=pethealth;Password=${ORACLE_PASSWORD};Data Source=oracle-db:1521/XEPDB1;"
+
+volumes:
+  oracle-data:
