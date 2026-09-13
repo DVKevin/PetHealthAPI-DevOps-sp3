@@ -35,6 +35,7 @@ WHEN (NEW.ID_TUTOR IS NULL)
 BEGIN
     SELECT SEQ_TB_PH_TUTOR.NEXTVAL INTO :NEW.ID_TUTOR FROM DUAL;
 END;
+/
 
 -- ------------------------------------------------------------
 -- TABELA: TB_PH_PET
@@ -82,6 +83,7 @@ WHEN (NEW.ID_PET IS NULL)
 BEGIN
     SELECT SEQ_TB_PH_PET.NEXTVAL INTO :NEW.ID_PET FROM DUAL;
 END;
+/
 
 -- ------------------------------------------------------------
 -- TABELA: TB_PH_VACINA
@@ -122,6 +124,7 @@ WHEN (NEW.ID_VACINA IS NULL)
 BEGIN
     SELECT SEQ_TB_PH_VACINA.NEXTVAL INTO :NEW.ID_VACINA FROM DUAL;
 END;
+/
 
 -- ------------------------------------------------------------
 -- TABELA: TB_PH_CONSULTA
@@ -166,6 +169,7 @@ WHEN (NEW.ID_CONSULTA IS NULL)
 BEGIN
     SELECT SEQ_TB_PH_CONSULTA.NEXTVAL INTO :NEW.ID_CONSULTA FROM DUAL;
 END;
+/
 
 -- ------------------------------------------------------------
 -- TABELA: TB_PH_MEDICAMENTO
@@ -209,3 +213,4 @@ WHEN (NEW.ID_MEDICAMENTO IS NULL)
 BEGIN
     SELECT SEQ_TB_PH_MEDICAMENTO.NEXTVAL INTO :NEW.ID_MEDICAMENTO FROM DUAL;
 END;
+/
