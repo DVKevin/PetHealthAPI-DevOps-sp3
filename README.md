@@ -26,10 +26,9 @@ Nesta Sprint de **DevOps Tools & Cloud Computing**, a aplicação foi containeri
 
 **Opção escolhida: ACR + ACI (Azure Container Registry + Azure Container Instances)**
 
-```
-<img width="758" height="559" alt="image" src="https://github.com/user-attachments/assets/76a7f176-3b69-406c-a061-e0baab988d55" />
+![Arquitetura da Solução na Azure](./docs/arquitetura-azure-pethealthapi.png)
 
-```
+**Como funciona:**
 
 **Como funciona:**
 1. A imagem Docker da API é buildada localmente e enviada (`docker push`) para o **Azure Container Registry (ACR)**.
