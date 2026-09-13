@@ -27,29 +27,29 @@ Nesta Sprint de **DevOps Tools & Cloud Computing**, a aplicação foi containeri
 **Opção escolhida: ACR + ACI (Azure Container Registry + Azure Container Instances)**
 
 ```
-┌─────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────┐
 │                         Azure (Cloud)                        │
-│                                                                │
-│  ┌──────────────────────┐                                    │
-│  │  Azure Container      │   docker push                     │
-│  │  Registry (ACR)        │◄──────────────┐                  │
-│  │  acrpethealthdevops    │                │                  │
-│  └──────────┬─────────────┘                │                  │
-│             │ docker pull                  │                  │
-│             ▼                              │                  │
-│  ┌──────────────────────┐         ┌────────┴─────────┐        │
-│  │  ACI - PetHealthAPI    │  HTTP  │  Máquina Local    │        │
-│  │  (.NET 8, porta 8080)  │◄───────┤  (build/push da   │        │
-│  │  IP público             │        │  imagem)          │        │
-│  └──────────┬─────────────┘         └───────────────────┘      │
-│             │ Oracle (porta 1521, via FQDN)                   │
-│             ▼                                                  │
-│  ┌──────────────────────┐                                    │
-│  │  ACI - Oracle XE       │                                    │
-│  │  (banco de dados)      │                                    │
-│  │  IP público             │                                    │
-│  └────────────────────────┘                                    │
-└─────────────────────────────────────────────────────────────┘
+│                                                              │
+│  ┌────────────────────────┐                                  │
+│  │  Azure Container       │  docker push                     │
+│  │  Registry (ACR)        │◄───────────────┐                 │
+│  │  acrpethealthdevops    │                │                 │
+│  └──────────┬─────────────┘                │                 │
+│             │ docker pull                  │                 │
+│             ▼                              │                 │
+│  ┌────────────────────────┐        ┌───────┴───────────┐     │
+│  │  ACI - PetHealthAPI    │  HTTP  │  Máquina Local    │     │
+│  │  (.NET 8, porta 8080)  │◄───────┤  (build/push da   │     │
+│  │  IP público            │        │   imagem)         │     │
+│  └──────────┬─────────────┘        └───────────────────┘     │
+│             │ Oracle (porta 1521, via FQDN)                  │
+│             ▼                                                │
+│  ┌────────────────────────┐                                  │
+│  │  ACI - Oracle XE       │                                  │
+│  │  (banco de dados)      │                                  │
+│  │  IP público            │                                  │
+│  └────────────────────────┘                                  │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 **Como funciona:**
