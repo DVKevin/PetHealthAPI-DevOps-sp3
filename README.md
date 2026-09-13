@@ -27,29 +27,8 @@ Nesta Sprint de **DevOps Tools & Cloud Computing**, a aplicação foi containeri
 **Opção escolhida: ACR + ACI (Azure Container Registry + Azure Container Instances)**
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                         Azure (Cloud)                        │
-│                                                              │
-│  ┌────────────────────────┐                                  │
-│  │  Azure Container       │  docker push                     │
-│  │  Registry (ACR)        │◄───────────────┐                 │
-│  │  acrpethealthdevops    │                │                 │
-│  └──────────┬─────────────┘                │                 │
-│             │ docker pull                  │                 │
-│             ▼                              │                 │
-│  ┌────────────────────────┐        ┌───────┴───────────┐     │
-│  │  ACI - PetHealthAPI    │  HTTP  │  Máquina Local    │     │
-│  │  (.NET 8, porta 8080)  │◄───────┤  (build/push da   │     │
-│  │  IP público            │        │   imagem)         │     │
-│  └──────────┬─────────────┘        └───────────────────┘     │
-│             │ Oracle (porta 1521, via FQDN)                  │
-│             ▼                                                │
-│  ┌────────────────────────┐                                  │
-│  │  ACI - Oracle XE       │                                  │
-│  │  (banco de dados)      │                                  │
-│  │  IP público            │                                  │
-│  └────────────────────────┘                                  │
-└──────────────────────────────────────────────────────────────┘
+<img width="758" height="559" alt="image" src="https://github.com/user-attachments/assets/76a7f176-3b69-406c-a061-e0baab988d55" />
+
 ```
 
 **Como funciona:**
