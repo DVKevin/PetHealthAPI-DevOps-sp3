@@ -1,22 +1,75 @@
 # 🐾 Pet Health API
 
-> **FIAP — Challenge 2026 | Sprint 1 + Sprint de Observabilidade e Testes**
+> **FIAP — Challenge 2026 | DevOps Tools & Cloud Computing**
 > Advanced Business Development with .NET
-
 
 ---
 
-## 📋 Descrição do Projeto
+## 📋 Descrição da Solução
 
-A **Pet Health API** é uma API RESTful desenvolvida em **ASP.NET Core (.NET 8)** como parte do Challenge 2026 da FIAP, em parceria com a **CLYVO VET**.
+A **Pet Health API** é uma API RESTful desenvolvida em **ASP.NET Core (.NET 8)**, criada como parte do Challenge 2026 da FIAP em parceria com a **CLYVO VET**.
 
-O projeto resolve um problema real do mercado pet: a **fragmentação da jornada de saúde do animal**. Tutores esquecem vacinas, perdem histórico clínico e clínicas perdem recorrência por falta de acompanhamento preventivo.
+A API centraliza o cadastro de **tutores, pets, vacinas, consultas e medicamentos**, permitindo o gerenciamento completo da jornada de saúde de um pet: quem é o responsável, quais animais ele possui, e o histórico de cuidados de cada um.
 
-A API centraliza **tutores, pets, vacinas, consultas e medicamentos**, formando a base da plataforma Pet Health — uma solução de cuidado contínuo e preventivo para pets.
+Nesta Sprint de **DevOps Tools & Cloud Computing**, a aplicação foi containerizada e implantada na nuvem Azure, com banco de dados Oracle também containerizado e publicado via Azure Container Instances, seguindo a arquitetura **ACR + ACI**.
 
-Nesta sprint, o projeto evoluiu com **camadas de monitoramento, observabilidade e testes automatizados**: Health Checks, logging estruturado com correlação de requisições, distributed tracing e métricas customizadas com OpenTelemetry, uma camada de domínio testável, e suítes de testes unitários e de integração seguindo o padrão AAA.
+## 💼 Benefícios para o Negócio
 
-### 🏗️ Tecnologias Utilizadas
+- **Elimina a fragmentação de informação**: hoje, tutores e clínicas perdem histórico de vacinas e consultas por falta de um sistema centralizado — a API resolve isso com um cadastro único e relacional.
+- **Reduz esquecimento de vacinas/retornos**: os endpoints de "vacinas vencendo" e "retornos agendados" permitem que a clínica atue de forma proativa, aumentando a recorrência de atendimento.
+- **Escalabilidade e disponibilidade**: rodando containerizada na Azure, a solução pode ser replicada e escalada conforme a demanda da clínica cresce, sem depender de infraestrutura própria.
+- **Portabilidade**: como toda a stack (API + banco) roda em containers Docker, o mesmo ambiente pode ser reproduzido em qualquer máquina ou provedor de nuvem, sem "funciona na minha máquina".
+
+---
+
+## ☁️ Arquitetura da Solução (Azure)
+
+**Opção escolhida: ACR + ACI (Azure Container Registry + Azure Container Instances)**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                         Azure (Cloud)                        │
+│                                                                │
+│  ┌──────────────────────┐                                    │
+│  │  Azure Container      │   docker push                     │
+│  │  Registry (ACR)        │◄──────────────┐                  │
+│  │  acrpethealthdevops    │                │                  │
+│  └──────────┬─────────────┘                │                  │
+│             │ docker pull                  │                  │
+│             ▼                              │                  │
+│  ┌──────────────────────┐         ┌────────┴─────────┐        │
+│  │  ACI - PetHealthAPI    │  HTTP  │  Máquina Local    │        │
+│  │  (.NET 8, porta 8080)  │◄───────┤  (build/push da   │        │
+│  │  IP público             │        │  imagem)          │        │
+│  └──────────┬─────────────┘         └───────────────────┘      │
+│             │ Oracle (porta 1521, via FQDN)                   │
+│             ▼                                                  │
+│  ┌──────────────────────┐                                    │
+│  │  ACI - Oracle XE       │                                    │
+│  │  (banco de dados)      │                                    │
+│  │  IP público             │                                    │
+│  └────────────────────────┘                                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Como funciona:**
+1. A imagem Docker da API é buildada localmente e enviada (`docker push`) para o **Azure Container Registry (ACR)**.
+2. Um **Azure Container Instance (ACI)** é criado para o **Oracle XE**, com IP público e porta 1521 exposta — este é o banco de dados em nuvem da aplicação.
+3. Um segundo **ACI** é criado para a **API**, puxando a imagem do ACR e configurado com a string de conexão apontando para o FQDN do ACI do Oracle.
+4. A comunicação entre API e Banco acontece via rede pública da Azure, usando o FQDN gerado automaticamente para o container do Oracle.
+
+**Recursos Azure criados (todos via Azure CLI):**
+
+| Recurso | Nome | Finalidade |
+|---|---|---|
+| Resource Group | `rg-pethealth-devops` | Agrupa todos os recursos da solução |
+| Azure Container Registry | `acrpethealthdevops` | Armazena a imagem Docker da API |
+| Container Instance | `aci-pethealth-oracle` | Executa o banco Oracle XE containerizado |
+| Container Instance | `aci-pethealth-api` | Executa a API .NET containerizada |
+
+---
+
+## 🏗️ Tecnologias Utilizadas
 
 | Tecnologia | Versão | Finalidade |
 |---|---|---|
@@ -24,61 +77,12 @@ Nesta sprint, o projeto evoluiu com **camadas de monitoramento, observabilidade 
 | Entity Framework Core | 8.0 | ORM para mapeamento das entidades |
 | Oracle.EntityFrameworkCore | 8.21.121 | Driver de conexão com Oracle |
 | Swashbuckle (Swagger) | 6.5.0 | Documentação OpenAPI |
-| Oracle Database | — | Banco de dados (servidor FIAP) |
-| Microsoft.Extensions.Diagnostics.HealthChecks | 10.0.11 | Health Checks nativos |
-| AspNetCore.HealthChecks.Oracle | 9.0.0 | Health Check de conectividade com Oracle |
-| Serilog.AspNetCore | 10.0.0 | Logging estruturado (console + arquivo) |
-| OpenTelemetry.Extensions.Hosting | 1.18.0 | Tracing e métricas distribuídas |
-| OpenTelemetry.Instrumentation.AspNetCore | 1.18.0 | Instrumentação automática de requisições HTTP |
-| xUnit | 2.5.3 | Framework de testes |
-| Moq | 4.20.72 | Mock de dependências |
-| FluentAssertions | 8.10.0 | Assertivas fluentes nos testes |
-| Microsoft.AspNetCore.Mvc.Testing | 8.0.11 | Testes de integração com WebApplicationFactory |
-
----
-
-## 🗂️ Estrutura do Projeto
-
-A solução foi reorganizada em `src/` (código de produção) e `tests/` (testes), seguindo o padrão de separação DDD-lite:
-
-```
-PetHealthAPI.sln
-├── src/
-│   └── PetHealthAPI/
-│       ├── Controllers/
-│       │   ├── TutoresController.cs
-│       │   ├── PetsController.cs
-│       │   ├── VacinasController.cs
-│       │   ├── ConsultasController.cs
-│       │   └── MedicamentosController.cs
-│       ├── Data/
-│       │   └── AppDbContext.cs
-│       ├── Models/
-│       │   ├── Tutor.cs
-│       │   ├── Pet.cs
-│       │   ├── Vacina.cs
-│       │   ├── Consulta.cs
-│       │   └── Medicamento.cs
-│       ├── Dominio/
-│       │   └── Validacoes/
-│       │       └── PetValidador.cs        # Regras de negócio (domínio rico)
-│       ├── Aplicacao/
-│       │   └── Middlewares/
-│       │       └── CorrelationIdMiddleware.cs
-│       ├── Infraestrutura/
-│       │   ├── Health/
-│       │   │   └── ServicoExternoHealthCheck.cs
-│       │   └── Observabilidade/
-│       │       └── AplicacaoMetricas.cs   # Meter + Counter customizado
-│       ├── appsettings.json
-│       └── Program.cs
-└── tests/
-    ├── PetHealthAPI.Tests.Unit/
-    │   └── Dominio/
-    │       └── PetValidadorTests.cs
-    └── PetHealthAPI.Tests.Integration/
-        └── PetsEndpointsTests.cs
-```
+| Oracle Database (gvenzl/oracle-xe:21-slim) | 21c | Banco de dados containerizado |
+| Docker / Docker Compose | — | Containerização da aplicação e do banco |
+| Azure CLI | — | Provisionamento de todos os recursos na nuvem |
+| Serilog.AspNetCore | 10.0.0 | Logging estruturado |
+| OpenTelemetry | 1.18.0 | Tracing e métricas distribuídas |
+| xUnit / Moq / FluentAssertions | — | Testes automatizados |
 
 ---
 
@@ -92,100 +96,154 @@ TB_PH_TUTOR (1) ──── (N) TB_PH_PET
         TB_PH_VACINA   TB_PH_CONSULTA   TB_PH_MEDICAMENTO
 ```
 
----
+O DDL completo (tabelas, colunas, chaves, comentários) está em [`script_bd.sql`](./script_bd.sql), na raiz do repositório.
 
-## 🩺 Monitoramento e Observabilidade
-
-### Health Checks
-
-O endpoint `/health` verifica a saúde da aplicação, a conectividade com o banco Oracle e a disponibilidade de um serviço externo simulado:
-
-```
-GET /health
-```
-
-Resposta (JSON detalhado por dependência):
-
-```json
-{
-  "status": "Healthy",
-  "checks": [
-    {
-      "nome": "oracle-database",
-      "status": "Healthy",
-      "duracaoMs": 12.5,
-      "dados": {}
-    },
-    {
-      "nome": "servico-externo",
-      "status": "Healthy",
-      "duracaoMs": 8.3,
-      "dados": { "LatenciaMs": 22 }
-    }
-  ],
-  "duracaoTotalMs": 21.1
-}
-```
-
-- `oracle-database`: usa `AddOracle`, testando a conexão real com o banco configurado em `appsettings.json`.
-- `servico-externo`: check customizado (`ServicoExternoHealthCheck`) que simula ~90% de disponibilidade, útil para demonstrar um cenário de falha controlada.
-
-### Logging Estruturado (Serilog)
-
-- Saída simultânea em **console** e **arquivo** (`logs/app-{data}.log`, rotação diária).
-- Cada linha de log inclui um **Correlation ID** (`X-Correlation-ID`), propagado automaticamente pelo `CorrelationIdMiddleware` — gerado se o cliente não enviar um, e devolvido no header da resposta.
-- Formato: `[HH:mm:ss NÍVEL] [CorrelationId] Mensagem`
-
-### Tracing e Métricas (OpenTelemetry)
-
-- **Tracing**: Span manual `CriarPetEndpoint` no `POST /api/pets`, com tags `pet.nome` e `pet.tutorId`, além da instrumentação automática do ASP.NET Core (spans por requisição HTTP).
-- **Métricas**: Counter customizado `pets_criados_total` (unidade `{pets}`), com tag `status` (`sucesso` ou `erro_validacao`), expondo o volume de criações de pets por resultado.
-- Exportação via `AddConsoleExporter` — os spans e métricas aparecem no console da aplicação em execução.
-
-> **Como visualizar**: rode a API (veja seção de execução) e observe o console — cada requisição imprime o Span correspondente, e as métricas são exportadas periodicamente.
+**CRUD demonstrado nesta atividade:** `Tutor` + `Pet` (tabelas relacionadas via `ID_TUTOR`), com as operações de Inclusão, Consulta, Alteração e Exclusão validadas ponta a ponta contra o banco em nuvem.
 
 ---
 
-## 🧪 Testes Automatizados
+## 🐳 Como Executar Localmente (Docker Compose)
 
-O projeto conta com duas suítes de teste, organizadas por camada:
+### Pré-requisitos
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Git](https://git-scm.com/)
 
-### Testes Unitários (`tests/PetHealthAPI.Tests.Unit`)
+### Passo a passo
 
-Cobrem a camada de **Domínio** (`PetValidador`), isoladamente, sem dependência de banco ou HTTP. Seguem o padrão **AAA** (Arrange, Act, Assert) com xUnit e FluentAssertions.
-
+**1. Clone o repositório**
 ```bash
-dotnet test tests/PetHealthAPI.Tests.Unit
+git clone https://github.com/DVKevin/PetHealthAPI-DevOps-sp3.git
+cd PetHealthAPI-DevOps-sp3
 ```
 
-### Testes de Integração (`tests/PetHealthAPI.Tests.Integration`)
+**2. Crie o arquivo `.env` na raiz do projeto** (não vai para o Git — contém a senha do banco):
+```
+ORACLE_PASSWORD=SuaSenhaLocalAqui
+```
 
-Validam o fluxo HTTP completo usando `WebApplicationFactory<Program>`, cobrindo:
-- `GET /health` → 200
-- `POST /api/pets` com dados válidos → 201
-- `POST /api/pets` com dados inválidos → 400
-
+**3. Suba a API e o banco juntos**
 ```bash
-dotnet test tests/PetHealthAPI.Tests.Integration
+docker compose up -d --build
 ```
 
-### Rodar toda a solução de uma vez
-
+Aguarde 2-5 minutos na primeira execução (o Oracle XE precisa inicializar). Acompanhe com:
 ```bash
-dotnet test
+docker compose logs -f
+```
+Espere a mensagem `DATABASE IS READY TO USE!`.
+
+**4. Crie o schema no banco** (usando um cliente SQL como DBeaver, conectando em `localhost:1522`, Service Name `XEPDB1`, usuário `pethealth`), executando o [`script_bd.sql`](./script_bd.sql).
+
+**5. Acesse o Swagger**
+```
+http://localhost:8080
 ```
 
-> **Nota**: os testes de integração conectam no Oracle real (mesma connection string do `appsettings.json`) e assumem a existência de um Tutor com `id = 1` no banco.
+**6. Verifique a saúde da aplicação**
+```
+http://localhost:8080/health
+```
 
 ---
 
-## ⚠️ Limitação Conhecida
+## ☁️ Deploy na Azure (passo a passo)
 
-O endpoint `GET /api/tutores` pode retornar erro `500` (`JsonException: A possible object cycle was detected`) quando um tutor possui pets vinculados, devido à referência circular entre `Tutor.Pets` e `Pet.Tutor` na serialização JSON do Entity Framework. Correção sugerida: configurar `ReferenceHandler.Preserve` ou `[JsonIgnore]` na propriedade de navegação reversa. Não afeta os demais endpoints (`GET /api/pets`, `POST`, etc.).
+Todos os recursos são criados via **Azure CLI**, usando os scripts versionados na pasta [`azure/`](./azure/). Pré-requisito: [Azure CLI instalado](https://learn.microsoft.com/pt-br/cli/azure/install-azure-cli) e uma assinatura Azure ativa.
+
+### 1. Criar o Resource Group e o Azure Container Registry
+```bash
+chmod +x azure/01-criar-acr.sh
+./azure/01-criar-acr.sh
+```
+Cria o Resource Group `rg-pethealth-devops` e o ACR `acrpethealthdevops`.
+
+### 2. Build e push da imagem da API para o ACR
+```bash
+chmod +x azure/02-build-push-api.sh
+./azure/02-build-push-api.sh
+```
+Builda a imagem Docker da API (a partir do `Dockerfile` na raiz) e envia para o ACR.
+
+### 3. Criar o ACI do banco Oracle
+```bash
+export ORACLE_PASSWORD="SuaSenhaForteAqui123#"
+chmod +x azure/03-criar-aci-oracle.sh
+./azure/03-criar-aci-oracle.sh
+```
+Cria um Container Instance rodando Oracle XE, com IP público. Acompanhe a inicialização com:
+```bash
+az container logs --resource-group rg-pethealth-devops --name aci-pethealth-oracle --follow
+```
+Espere `DATABASE IS READY TO USE!` antes de prosseguir.
+
+### 4. Criar o schema no Oracle da nuvem
+Conecte via DBeaver (ou outro cliente Oracle) no FQDN mostrado ao final do script 3, porta `1521`, Service Name `XEPDB1`, usuário `pethealth`, e execute o [`script_bd.sql`](./script_bd.sql).
+
+### 5. Criar o ACI da API
+```bash
+export ORACLE_PASSWORD="SuaSenhaForteAqui123#"   # a mesma do passo 3
+chmod +x azure/04-criar-aci-api.sh
+./azure/04-criar-aci-api.sh
+```
+Cria o Container Instance da API, já configurado com a connection string (via variável de ambiente segura) apontando para o Oracle criado no passo 3.
+
+### 6. Acessar a aplicação na nuvem
+O script 4 mostra ao final o FQDN da API. Acesse:
+```
+http://<fqdn-da-api>:8080          → Swagger
+http://<fqdn-da-api>:8080/health   → Health Check
+```
+
+### 7. Limpeza dos recursos (ao final dos testes)
+```bash
+az group delete --name rg-pethealth-devops --yes --no-wait
+```
 
 ---
 
-## 🛣️ Documentação das Rotas
+## 📮 Testes via Postman
+
+Sequência recomendada, usando o Swagger ou Postman contra a API publicada na Azure:
+
+1. **Inclusão** — `POST /api/tutores` (cria um tutor)
+2. **Inclusão** — `POST /api/pets` (cria 2 pets vinculados ao tutor, via `tutorId`)
+3. **Consulta** — `GET /api/tutores` (confirma tutor + pets relacionados)
+4. **Alteração** — `PUT /api/pets/{id}` (atualiza dados de um pet)
+5. **Consulta** — `GET /api/pets/{id}` (confirma a alteração persistida)
+6. **Exclusão** — `DELETE /api/pets/{id}` (remove um pet)
+7. **Consulta** — `GET /api/tutores` (confirma que o pet não aparece mais)
+
+Cada uma dessas operações pode ser comprovada diretamente no banco com `SELECT * FROM TB_PH_TUTOR` / `SELECT * FROM TB_PH_PET`, usando o DBeaver conectado ao Oracle da Azure.
+
+---
+
+## 📂 Estrutura do Projeto
+
+```
+PetHealthAPI.sln
+├── Dockerfile
+├── docker-compose.yml
+├── script_bd.sql
+├── azure/
+│   ├── 01-criar-acr.sh
+│   ├── 02-build-push-api.sh
+│   ├── 03-criar-aci-oracle.sh
+│   └── 04-criar-aci-api.sh
+├── src/
+│   └── PetHealthAPI/
+│       ├── Controllers/
+│       ├── Data/AppDbContext.cs
+│       ├── Models/
+│       ├── appsettings.json
+│       └── Program.cs
+└── tests/
+    ├── PetHealthAPI.Tests.Unit/
+    └── PetHealthAPI.Tests.Integration/
+```
+
+---
+
+## 📡 Principais Endpoints
 
 ### 👤 Tutores — `/api/tutores`
 
@@ -193,9 +251,6 @@ O endpoint `GET /api/tutores` pode retornar erro `500` (`JsonException: A possib
 |--------|------|-----------|------|
 | GET | `/api/tutores` | Lista todos os tutores | 200 |
 | GET | `/api/tutores/{id}` | Busca tutor por ID | 200 / 404 |
-| GET | `/api/tutores/email/{email}` | Busca tutor por email | 200 / 404 |
-| GET | `/api/tutores/nome/{nome}` | Busca tutores por nome (parcial) | 200 |
-| GET | `/api/tutores/{id}/pets` | Lista os pets de um tutor | 200 / 404 |
 | POST | `/api/tutores` | Cadastra novo tutor | 201 / 400 |
 | PUT | `/api/tutores/{id}` | Atualiza dados do tutor | 204 / 400 / 404 |
 | DELETE | `/api/tutores/{id}` | Remove tutor | 204 / 404 |
@@ -205,139 +260,28 @@ O endpoint `GET /api/tutores` pode retornar erro `500` (`JsonException: A possib
 | Método | Rota | Descrição | HTTP |
 |--------|------|-----------|------|
 | GET | `/api/pets` | Lista todos os pets | 200 |
-| GET | `/api/pets/{id}` | Busca pet por ID (com histórico completo) | 200 / 404 |
-| GET | `/api/pets/especie/{especie}` | Lista pets por espécie | 200 |
-| GET | `/api/pets/nome/{nome}` | Busca pets por nome | 200 |
-| GET | `/api/pets/castrados` | Lista apenas pets castrados | 200 |
+| GET | `/api/pets/{id}` | Busca pet por ID | 200 / 404 |
 | POST | `/api/pets` | Cadastra novo pet | 201 / 400 |
 | PUT | `/api/pets/{id}` | Atualiza dados do pet | 204 / 400 / 404 |
 | DELETE | `/api/pets/{id}` | Remove pet | 204 / 404 |
-
-### 💉 Vacinas — `/api/vacinas`
-
-| Método | Rota | Descrição | HTTP |
-|--------|------|-----------|------|
-| GET | `/api/vacinas` | Lista todas as vacinas | 200 |
-| GET | `/api/vacinas/{id}` | Busca vacina por ID | 200 / 404 |
-| GET | `/api/vacinas/pet/{petId}` | Lista vacinas de um pet | 200 / 404 |
-| GET | `/api/vacinas/vencendo` | Vacinas com próxima dose em 30 dias | 200 |
-| POST | `/api/vacinas` | Registra nova vacina | 201 / 400 |
-| PUT | `/api/vacinas/{id}` | Atualiza dados da vacina | 204 / 400 / 404 |
-| DELETE | `/api/vacinas/{id}` | Remove registro de vacina | 204 / 404 |
-
-### 🏥 Consultas — `/api/consultas`
-
-| Método | Rota | Descrição | HTTP |
-|--------|------|-----------|------|
-| GET | `/api/consultas` | Lista todas as consultas | 200 |
-| GET | `/api/consultas/{id}` | Busca consulta por ID | 200 / 404 |
-| GET | `/api/consultas/pet/{petId}` | Histórico clínico de um pet | 200 / 404 |
-| GET | `/api/consultas/retornos` | Retornos agendados nos próximos 30 dias | 200 |
-| POST | `/api/consultas` | Registra nova consulta | 201 / 400 |
-| PUT | `/api/consultas/{id}` | Atualiza dados da consulta | 204 / 400 / 404 |
-| DELETE | `/api/consultas/{id}` | Remove registro de consulta | 204 / 404 |
-
-### 💊 Medicamentos — `/api/medicamentos`
-
-| Método | Rota | Descrição | HTTP |
-|--------|------|-----------|------|
-| GET | `/api/medicamentos` | Lista todos os medicamentos | 200 |
-| GET | `/api/medicamentos/{id}` | Busca medicamento por ID | 200 / 404 |
-| GET | `/api/medicamentos/pet/{petId}` | Lista medicamentos de um pet | 200 / 404 |
-| GET | `/api/medicamentos/ativos` | Lista medicamentos em uso ativo | 200 |
-| POST | `/api/medicamentos` | Registra novo medicamento | 201 / 400 |
-| PUT | `/api/medicamentos/{id}` | Atualiza dados do medicamento | 204 / 400 / 404 |
-| DELETE | `/api/medicamentos/{id}` | Remove registro de medicamento | 204 / 404 |
 
 ### 🩺 Monitoramento
 
 | Método | Rota | Descrição | HTTP |
 |--------|------|-----------|------|
-| GET | `/health` | Verifica saúde da API, Oracle e serviço externo | 200 / 503 |
-
----
-
-## ⚙️ Instalação e Execução
-
-### Pré-requisitos
-
-- [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
-- [Git](https://git-scm.com/)
-- Acesso à rede FIAP (VPN se necessário para o Oracle)
-
-### Passo a Passo
-
-**1. Clone o repositório**
-```bash
-git clone https://github.com/PedroClaes/PetHealthAPI.git
-cd PetHealthAPI
-```
-
-**2. Restaure os pacotes NuGet de toda a solução**
-```bash
-dotnet restore
-```
-
-**3. Execute as Migrations para criar as tabelas no Oracle**
-```bash
-cd src/PetHealthAPI
-dotnet ef migrations add InitialCreate
-dotnet ef database update
-```
-
-**4. Execute a aplicação** (a partir de `src/PetHealthAPI`)
-```bash
-dotnet run
-```
-
-**5. Acesse o Swagger**
-```
-http://localhost:5000
-```
-
-**6. Rode os testes** (a partir da raiz, onde está o `.sln`)
-```bash
-dotnet test
-```
-
----
-
-## 🔌 Configuração do Banco de Dados
-
-A string de conexão está no arquivo `src/PetHealthAPI/appsettings.json`:
-
-```json
-{
-  "ConnectionStrings": {
-    "OracleConnection": "User Id=rm556649;Password=280306;Data Source=oracle.fiap.com.br:1521/orcl;"
-  }
-}
-```
-
----
-
-## 📌 Retornos HTTP Utilizados
-
-| Código | Significado | Quando ocorre |
-|--------|-------------|---------------|
-| 200 OK | Sucesso | GET com resultado |
-| 201 Created | Criado com sucesso | POST bem-sucedido |
-| 204 No Content | Sucesso sem corpo | PUT e DELETE bem-sucedidos |
-| 400 Bad Request | Dados inválidos | Validação falhou ou dados inconsistentes |
-| 404 Not Found | Não encontrado | Recurso inexistente no banco |
-| 503 Service Unavailable | Indisponível | Health check reporta dependência fora do ar |
+| GET | `/health` | Verifica saúde da API e do Oracle | 200 / 503 |
 
 ---
 
 ## 👥 Integrantes
 
 | Nome | RM |
+|---|---|
 | Matheus Arazin de Oliveira | 556649 |
-| Artur Pioli Silva| 565597 |
-| Kevin Martins Campos| 563454 |
-| Pedro Gabriel Claes| 566058 |
+| Artur Pioli Silva | 565597 |
+| Kevin Martins Campos | 563454 |
+| Pedro Gabriel Claes | 566058 |
 
 ---
 
 *Challenge 2026 — FIAP × CLYVO VET*
-*"Cuidado contínuo para quem faz parte da família."*
