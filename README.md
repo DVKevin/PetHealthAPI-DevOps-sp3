@@ -266,4 +266,12 @@ PetHealthAPI.sln
 
 ---
 
+## 🎥 Vídeo de Demonstração
+
+Assista à demonstração completa da solução (criação dos recursos na Azure, deploy e CRUD com evidência no banco):
+
+**[https://youtu.be/NS4vfJLMsrw](https://youtu.be/NS4vfJLMsrw)**
+
+---
+
 *Challenge 2026 — FIAP × CLYVO VET*
